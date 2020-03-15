@@ -66,7 +66,7 @@ who [-Huq] <file | arg1 arg2>
 #可以这么看，whoami是不严肃地问，who am i是严肃地问
 ```
 
-![img](https://wx2.sinaimg.cn/mw690/005LasY6gy1gcughbobj5j30jm062dgh.jpg)
+
 
 ![img](https://wx1.sinaimg.cn/mw690/005LasY6gy1gcugjuuqf9j313i08ejv8.jpg)
 
@@ -100,7 +100,7 @@ uname [-amnvpio]
 	-o 操作系统名称
 ```
 
-![img](https://wx1.sinaimg.cn/mw690/005LasY6gy1gcugtk98c2j319g0buwgx.jpg)
+
 
 
 
@@ -118,7 +118,7 @@ date [-dsu] <参数>
 	<+日期格式> 显示使用的日期格式
 ```
 
-![img](https://wx4.sinaimg.cn/mw690/005LasY6gy1gcugz2k8d6j30r80byaby.jpg)
+
 
 
 
