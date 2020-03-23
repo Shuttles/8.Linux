@@ -153,7 +153,7 @@ void do_ls(char dirname[]) {
 
 5. <u>***通过description还可以知道，传出参数`buf`的具体的结构体类型中有哪些信息。***</u>
 
-   <u>***比如包含该文件的设备、inode号、文件权限、硬连接数、uid、gid、总大小、blocksize、ctime、atime、mtim***</u>
+   <u>***比如包含该文件的设备、inode号、文件权限、硬连接数、uid、gid、总大小、blocksize、ctime、atime、mtime***</u>
 
 
 
@@ -228,3 +228,12 @@ void do_ls(char dirname[]) {
 放几列？
 
 先一列，再往上加，看看行不行！
+
+
+
+
+
+# 我实现的ls中需要修改的地方
+
+1. 获取权限和属性那块可以用宏封装
+2. 有些地方可以不用文件指针做形参，可以用stat结构体
