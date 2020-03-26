@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <math.h>
 
 //#define PAGELINE 15
 #define LENLINE 512
@@ -44,7 +45,14 @@ void do_more(FILE *fp) {
     FILE *cmd = fopen("/dev/tty", "r");
     int num_line = 0, reply;//get_cmd();
     while (fgets(line, LENLINE, fp)) {
+        int len = strlen(line);//每行的长度
+        if (len > size.ws_col) {
+            int cnt = ((int)(ceil(len / (double)size.ws_col)) - 1);
+            num_line += cnt;
+        }
+
         if (num_line == PAGELINE) {
+
             reply = get_cmd(cmd);
             if (reply == 0) break;
             num_line -= reply;//妙啊！！！

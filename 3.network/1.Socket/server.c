@@ -12,8 +12,10 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <signal.h>
 
 int main(int argc, char *argv[]) {
+    signal(SIGCHLD, SIG_IGN);
     if (argc != 2) {
         fprintf(stderr, "Usage : %s port\n", argv[0]);
         exit(1);
