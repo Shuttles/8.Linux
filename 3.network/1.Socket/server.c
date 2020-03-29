@@ -49,23 +49,25 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+    int i = 1;
+    pid_t pid = 1;
     while (1) {
         int sockfd;
-        printf("Socket before accept.\n");
+        printf("Socket before accept. i = %d ""%s\n", i, (pid == 0) ? "Child" : "Parent");
         if ((sockfd = accept(server_listen, NULL, NULL)) < 0) {
             perror("accept");
             close(sockfd);
             continue;
         }
         
-        pid_t pid;
         if ((pid = fork()) < 0) {
             perror("fork");
             continue;
         }
         
+        printf("Socket after accept.i = %d ""%s\n", i++, (pid == 0) ? "Child" : "Parent");
         if (pid == 0) {
-            close(server_listen);
+            close(server_listen);//?????到底要不要close(server_listen)??
             char name[20] = {0};
             if (recv(sockfd, name, sizeof(name), 0) <= 0) {
                 perror("recv");
