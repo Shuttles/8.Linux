@@ -290,7 +290,7 @@ int main(int argc, char *argv[]) {
 
 ## Client端
 
-Clinet端也需要socket，但是不需要有门牌号(端口号)
+Clinet端也需要socket，也需要有门牌号(端口号)，只不过client端的端口号不需要自己`bind`申请！而是由操作系统分配！！
 
 ```C
 #include <stdio.h>
@@ -432,7 +432,7 @@ int main(int argc, char *argv[]) {
   while (1) {
     int sockfd;//就相当于NPC
     printf("Socket before accept.\n");//输出调试
-    if (sockfd = accept(server_listen, NULL, NULL) < 0) {
+    if ((sockfd = accept(server_listen, NULL, NULL)) < 0) {
       //参数表明不关注是哪个地址
       perror("accept");
       close(sockfd);
