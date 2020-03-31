@@ -102,7 +102,7 @@ struct RecvMsg chat_recv(int fd) {
 
 # 初步功能框架实现
 
-初步的功能就是
+初步的功能就是可以连接上了，但是还没能实现具体收发信息
 
 server端
 
@@ -171,6 +171,7 @@ bool check_online(char *name) {//检查name这个用户名是否被用过了，�
 int main() {//为啥不需要传参呢？因为参数已经由配置文件给出！！
     int port, server_listen, fd；
     struct RecvMsg recvmsg;//用来接收client发过来的信息
+    struct Msg msg;//用来发送信息给client
     port = atoi(get_value(conf, "SERVER_PORT"));//get_value函数实现在common.c中，实现的功能是，传入一个文件路径和一个字符串，返回那个文件中这个字符串后面的字符串；
     client = (struct User *)calloc(MAX_CLIENT, sizeof(struct User));//申请堆区内存空间
     
@@ -199,23 +200,24 @@ int main() {//为啥不需要传参呢？因为参数已经由配置文件给出
         //如果成功收到client端登录后发送的信息，那首先得检查是否重名，如果重名，那就拒绝连接,如果不重名，那就在client数组中找一个可用的最小下标，然后分配给这个client一个client[sub];
         if (check_online(recvmsg.msg.from)) {
             //拒接连接
-        } else {
-            //找最小下标并进行一系列操作
-            //一系列操作其实目的就是把客户保存起来并且为他分配线程
-            int sub;
-            sub = find_sub();
-            client[sub].online = 1;//置为在线
-            client[sub].fd = fd;//保存这个文件描述符用来通信
-            strcpy(client[sub].name, recvmsg.msg.from);
-            pthread_create(&client[sub].tid, NULL, work, NULL);
         }
+        
+        
+        //找最小下标并进行一系列操作
+        //一系列操作其实目的就是把客户保存起来并且为他分配线程
+        int sub;
+        sub = find_sub();
+        client[sub].online = 1;//置为在线
+        client[sub].fd = fd;//保存这个文件描述符用来通信
+        strcpy(client[sub].name, recvmsg.msg.from);
+       	pthread_create(&client[sub].tid, NULL, work, NULL);
         
         
         
     }
     
     
-    printf("%d\n", port);
+    
     return 0;
 }
 ```
@@ -267,7 +269,152 @@ int main() {
         return 2;//发送失败则return 2
     }
     
+    
     return 0;
 }
 ```
+
+
+
+
+
+
+
+# 进一步功能实现
+
+即使用多线程、多进程初步实现聊天功能
+
+server端：
+
+1. 线程处理函数work的实现
+2. 
+
+
+
+client端：
+
+1. 接收server端对登录操作的反馈信息及后续操作
+2. 在子进程中发送信息
+
+
+
+
+
+## Server端
+
+增加的功能
+
+1. 原17~19行的work函数
+2. 拒绝连接的处理方法
+
+
+
+
+
+```c
+void *work(void *arg) {
+    int *sub = (int *)arg;
+    int client_fd = client[*sub].fd;
+    
+    struct RecvMsg rmsg;
+    printf(GREEN"Login "NONE": %s\n", client[*sub].name);
+    
+    //接下来要收信息了
+    struct RecvMsg rmsg;
+    while (1) {
+        rmsg = chat_recv(client_fd);
+        if (rmsg.retval < 0) {//如果接收失败
+            printf(PINK"Logout:"NONE" %s \n", client[*sub].name);
+            close(client_fd);
+            client[*sub].online = 0;
+            return NULL;
+        }
+        //如果成功接收信息
+        printf(BLUE"%s"NONE" :%s\n", rmsg.msg.from, rmsg.msg.message);
+    }
+    return NULL;
+}
+
+//原77行
+pthread_create(&client[sub].tid, NULL, work, (void *)&sub);
+```
+
+```c
+//原67行的拒接连接处理方法
+
+if (check_online(recv.msg.from)) {
+    msg.flag = 3;
+    strcpy(msg.messag, "You have Already Login System!\n");
+    chat_send(msg, fd);//发送信息给client表示拒接连接
+    close(fd);
+    continue;
+}
+
+//原72行开始，接收连接的处理方法
+msg.flag = 2;
+strcpy(msg.message, "Welcome to this chatroom!\n");
+chat_send(msg, fd);
+```
+
+
+
+## Client端
+
+1. 接收server端对登录操作的反馈信息及后续操作
+
+```c
+#include "../common/color.h"
+
+//从原来的29行开始添加
+
+//因为我必须知道server端是拒接我还是连接我，所以得从server端接收信息
+struct RecvMsg rmsg = chat_recv(sockfd);
+if (rmsg.retval < 0) {//如果接收失败
+    fprintf(stderr, "Error!\n");
+    return -1;
+}
+//打印server端发来的信息
+printf(GREEN"Server"NONE": %s\n", rmsg.msg.message);
+
+if (rmsg.msg.flag == 3) {//flag==3表示我重名了，server端要求我断开连接
+    close(sock_fd);
+    return 1;
+}
+```
+
+
+
+2.如果server端允许我连接之后,创建子进程用于发送信息
+
+```c
+//接上面的17行后面写，就是如果server端允许我连接之后,创建子进程用于发送信息
+
+pid_t pid;
+
+if ((pid = fork()) < 0) {
+    perror("fork");
+}
+
+//子进程
+if (pid = 0) {
+    system("clear");//发信息之前清空屏幕
+    while (1) {
+        printf(L_PINK"Please Input Message:"NONE"\n");
+        scanf("%[^\n]s, msg.message");
+        getchar();
+        chat_send(msg, sockfd);//发送信息
+        memset(msg.message, 0, sizeof(msg.message));
+        system("clear");//发送信息之后也清空屏幕
+    }
+} else {
+    //父进程
+    wait(NULL);
+}
+```
+
+
+
+## 出现的bug
+
+在client端运行时，ctrl + c会退出程序，但是不会退出用户！
 
