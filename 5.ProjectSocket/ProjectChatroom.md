@@ -210,6 +210,7 @@ int main() {//为啥不需要传参呢？因为参数已经由配置文件给出
         client[sub].online = 1;//置为在线
         client[sub].fd = fd;//保存这个文件描述符用来通信
         strcpy(client[sub].name, recvmsg.msg.from);
+        
        	pthread_create(&client[sub].tid, NULL, work, NULL);
         
         
@@ -335,7 +336,7 @@ void *work(void *arg) {
     return NULL;
 }
 
-//原77行
+//原81行
 pthread_create(&client[sub].tid, NULL, work, (void *)&sub);
 ```
 
@@ -414,7 +415,60 @@ if (pid = 0) {
 
 
 
-## 出现的bug
+# 出现的bug
 
-在client端运行时，ctrl + c会退出程序，但是不会退出用户！
+1. 退出的时候，显示的是上一个登录进来的用户的名字
 
+   + 原因：在线程函数`work()`中，sub指向的地址会随其他线程的进行而改变！！这是多线程必然带来的问题！！
+
+   + 解决方法：work()函数中，不定义指针变量，直接保存下标！即将`int *sub = (int *)arg`改成`int sub = *(int *)arg`；
+
+
+
+
+
+
+
+2. 在client端运行时，ctrl + c会退出程序，但是不会退出用户！
+
+   原因：
+
+   1. `ctrl + c`其实是一个信号
+   2. 用`kill -l`可以列出linux中的所有信号
+
+   ![img](https://wx3.sinaimg.cn/mw690/005LasY6gy1gdd7ijooi7j311a0f21al.jpg)
+
+   3. ==系统通过信号告诉进程它应该干什么事情==
+
+   4. `ctrl + c`就是信号2)，就是中断信号
+
+   解决办法：
+
+   1. 用`signal()`函数
+
+      ![img](https://wx3.sinaimg.cn/mw690/005LasY6gy1gdd89lqwqpj31cd0u0hch.jpg)
+
+   2. 由description可知，这个函数设置了disposition of 第一个参数，具体设置方式就是第二个参数handler，它可以是`SIG_IGN, SIG_DFL`或者是自己定义的一个函数
+
+   3. 所以代码如下
+
+      在client.c中
+
+      ```c
+      //在“进一步功能实现的”client.c中的11行之前加上
+      signal(SIGINT, logout);
+      
+      //logout的函数声明与定义
+      void logout(int signalnum) {
+          close(sockfd);//注意还得将sockfd设置为全局变量
+          exit(1);
+          printf("recv a signal!\n");
+          return;
+      }
+      
+      //接着在22行下面加上
+      close(sockfd);//为什么父进程中也要close呢？因为子进程是完全复制了父进程的内容，所以子进程关掉的sockfd是子进程中的，父进程中的sockfd没关掉
+      
+      ```
+
+      
