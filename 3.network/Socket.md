@@ -1,3 +1,11 @@
+
+
+# socket编程入门：1天玩转socket通信技术（非常详细）
+
+这个写得还可以！
+
+http://c.biancheng.net/socket/
+
 # 为什么要用socket编程？
 
 ![img](https://wx2.sinaimg.cn/mw690/005LasY6gy1gd41c3naqoj31dk0u01b5.jpg)
