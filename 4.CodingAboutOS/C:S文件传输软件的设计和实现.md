@@ -81,3 +81,219 @@
 
 
 仔细想想，`packet_pre`根本不需要！！
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 实现
+
+> 路径
+>
+> `SocketProject/filetransfer`
+
+
+
+## Sender.c
+
+编译命令
+
+```shell
+gcc sender.c ./common/common.c ./common/tcp_client.c -o client
+```
+
+其实就相当于`Client`端
+
+```c
+#include "./common/head.h"
+#include "./common/common.h"
+#include "./common/tcp_client.h"
+
+struct FileMsg {
+    long size;//文件大小，用来检验收到的文件大小与原文件大小是否一致
+   	char name[50];//文件名
+    char buf[4096];//文件真实信息
+};
+
+int main(int argc, char **argv) {	
+    if (argc != 3) {
+        fprintf(stderr, "Usage : %s ip port!\n", argv[0]);
+        return 1;
+    }
+    
+    int sockfd, port;
+    char buff[100] = {0};//存放指令
+    char name[50] = {0};//文件名
+    struct FileMsg filemsg;
+    
+    port = atoi(argv[2]);
+    if ((sockfd = socket_connect(argv[1], port)) < 0) {
+        //socket_connect(char *ip, int port)实现在tcp_client.h中，实现的功能是完成socket连接
+        perror("socket_connect");
+        return 1;
+    }
+    
+    //连接上之后
+    while (1) {
+        scanf("%[^\n]s", buff);
+        getchar();//一定要吞回车！！！！！！！！！！否则后果很严重！！
+        if (!strncmp("send ", buff, 5)) {
+            //表示这是我们能认识的一个正确指令
+            strcpy(name, buff + 5);
+        } else {
+            fprintf(stderr, "invalid command!\n");
+            continue;
+        }
+        
+        //打开文件
+        FILE *fp = NULL;
+        size_t size;//记录每次读了多少
+        if ((fp = fopen(name, "rb")) == NULL) {
+            //发送文件的时候要以二进制形式打开！
+            perror("fopen");
+            continue;
+        } 
+        
+        //打开文件后我们要知道文件的大小
+        //通过fseek()
+        //fseek就是在文件流中移动，可以把文件指针移到任何位置！
+        //如果文件指针移动到了文件末尾，那就知道了文件的大小！！
+        //更详细的关于fseek的资料请往下翻！
+        fseek(fp, 0L, SEEK_END);//L表示长整型
+        filemsg.size = ftell(fp);
+        strcpy(filemsg.name, name);
+        
+        fseek(fp, 0L, SEEK_SET);//将文件指针重新指向开头
+        
+        //接下来就开始读文件了！
+        //用fread()，因为它是`binary stream input/output`
+        while ((size = fread(filemsg.buf, 1, 4096, fp))) {
+            //收完一次就发
+            send(sockfd, (void *)&filemsg, sizeof(filemsg), 0);
+            //send 还不太熟悉！！！！！
+            memset(filemsg.buf, 0, sizeof(filemsg.buf));
+        }
+        printf("After Send!\n");
+    }
+    close(sockfd);
+    fclose(fp);
+    return 0;
+}
+```
+
+
+
+### fseek()
+
+![img](https://wx4.sinaimg.cn/mw690/005LasY6gy1gdgxssyv4hj31560u04qp.jpg)
+
+![img](https://wx2.sinaimg.cn/mw690/005LasY6gy1gdgxutoeb1j318d0u0kds.jpg)
+
+![img](https://wx4.sinaimg.cn/mw690/005LasY6gy1gdgxxpzsaoj31bc078dl9.jpg)
+
+1. 由description可知，`fseek()`可以重置文件指针的位置，第三个参数是开始移动的起点，第二个参数offset是移动的字节数(从起点往后移动)
+
+2. 由returnvalue可知，如果成功，有几个函数返回 0，但是`ftell()`返回当前的偏移量！
+
+   ***<u>由此，我们可以先将文件指针移到文件末尾，再调用`ftell()`就可以获得文件长度了！</u>***
+
+
+
+### fread()
+
+![img](https://wx1.sinaimg.cn/mw690/005LasY6gy1gdgy4k3hddj318h0u04ja.jpg)
+
+1. 由description可知，。。。第一段写得很明白啦
+
+
+
+
+
+## recver.c
+
+1. 就相当于`server.c`
+2. 要在本地打开一个文件往里写收到的内容
+3. 收的同时要判断这个文件有没有收全！(通过文件大小)
+
+
+
+编译命令
+
+```shell
+gcc recver.c ./common/common.c ./common/tcp_server.c -o server
+```
+
+
+
+```c
+#include "./common/head.h"
+#include "./common/tcp_server.c"
+#include "./common/common.h"
+
+void child_do(int fd) {
+    size_t recv_size;
+    struct FileMsg packet_t;
+    int packet_size = sizeof(struct FileMsg);
+    printf("Before recv!\n");
+    while ((recv_size = recv(fd, (void *)&packet_t, packet_size))) {
+        printf("recv_size = %d\n", recv_size);
+    }
+}
+
+
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage : %s port!\n", argv[0]);
+        return 1;
+    }
+    
+    int server_listen, port, fd;
+    pid_t pid;
+    
+    port = atoi(argv[1]);
+    
+    if ((server_listen = socket_create(port)) < 0) {
+        //socket_create(int port)实现在tcp_server.c中，实现的功能是创建一个监听状态的socket！！
+        perror("socket_create");
+        return 1;
+    }
+    
+    //该收文件了！
+    while (1) {
+        if ((fd = accept(server_listen, NULL, NULL)) < 0) {
+            perror("accept");
+            continue;
+        }
+        
+        printf("After accept!\n");
+        
+        //一般来说，都是子进程用来做事情，父进程用来循环等待去重新获取连接！
+        if ((pid = fork()) < 0) {
+            perror("fork");
+            continue;
+        }
+        if (pid == 0) {
+            close(server_listen);//因为子进程一定用不上server_listen了
+            child_do(fd);
+            exit(0);//一定要exit！！！！
+        } else {
+            close(fd);//父进程一定用不上fd了
+        }
+        
+        
+    }
+    
+    return 0;
+}
+```
+
