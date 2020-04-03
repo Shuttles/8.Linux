@@ -461,8 +461,8 @@ if (pid = 0) {
       //logout的函数声明与定义
       void logout(int signalnum) {
           close(sockfd);//注意还得将sockfd设置为全局变量
+          printf("您已退出！\n");
           exit(1);
-          printf("recv a signal!\n");
           return;
       }
       
@@ -472,3 +472,179 @@ if (pid = 0) {
       ```
 
       
+
+3. client端运行时，如果按下`Ctrl + D(即EOF)`，也结束不了进程
+
+   解决办法：
+
+   ```c
+   //在“进一步功能实现”的client.c中的子进程中
+   //在while外加上
+   char c = 'a';
+   
+   //while内
+   while (c != EOF) {
+       //scanf下面一行改成
+       c = getchar();
+   }
+   ```
+
+   
+
+
+
+
+
+# 增加的功能1
+
+即将公聊信息转发给所有人
+
+
+
+## Server端
+
+1. 很显然，server端需要在线程函数`work()`中做文章
+
+
+
+```c
+//Filename: server.c
+
+//在“进一步功能实现”的work函数的19行下面加上
+if (rmsg.msg.flag == 0) {
+    send_all(rmsg.msg);
+} else {
+    printf("这是一条私聊信息\n");
+}
+
+//send_all函数的实现
+void send_all(struct Msg msg) {
+    for (int i = 0; i < MAX_CLIENT; i++) {
+        if (!clien[i].online) continue;
+        chat_send(msg, client[i].fd);
+    }
+}
+```
+
+
+
+
+
+## Client端
+
+1. 原来的子进程用于发送信息，那么父进程就可以用来接收公聊信息！
+
+
+
+```c
+//Filename : client.c
+
+//在父进程的wait(NULL)前面加上
+while (1) {
+    FILE *log_fp = fopen(logfile, "w");
+    struct RecvMsg rmsg;
+    if (rmsg.msg.flag == 0) {
+    fprintf(log_fp, L_BLUE"%s : "NONE"%s\n", rmsg.msg.from, rmsg.msg.message);
+    }
+}
+
+
+//在主函数前定义一个logfile字符串，用来存日志文件的文件名
+char logfile[50] = {0};
+
+
+//在主函数一开始加上
+strcpy(logfile, get_value(conf, "LOG_FILE"));
+
+//如果想试验的话就在子进程(用来发送信息)中加上
+msg.flag = 0;//标志这是个公聊信息！
+```
+
+PS：除了fprintf之外，也可以用`freopen(log_file, "a+", stdout);`
+
+
+
+
+
+
+
+# 增加的功能2
+
+即对私聊信息的处理
+
+
+
+
+
+## Server端
+
+
+
+```c
+//Filename : server.c
+
+//在“增加的功能1”中的server端的代码第6行
+//把else及其后面的一个语句改成
+
+else if (rmsg.msg.flag == 1) {
+    if (rmsg.msg.message[0] == '@') {
+        char to[20] = {0};
+        //拷贝名字
+        int i = 0;
+        for (i = 1; i < 20; i++) {
+            if (rmsg.msg.message[i] ==' ')
+                break;
+        }
+        strncpy(to, rmsg.msg.message + 1, i - 1);
+        //检查用户是否存在
+        
+        int ind;
+        if ((ind = check_name(to)) < 0) {
+            //告知不在线
+            sprintf(rmsg.msg.message, "%s is not online!\n", to);
+            chat_send(rmsg.msg, client_fd);
+            continue;
+        }
+        //如果用户在线
+        rmsg.msg.flag = 1;//标志为私聊信息
+        chat_send(rmsg.msg, client[ind].fd);
+    }
+}
+
+
+//check_name()的实现
+int check_name(char *name) {
+    for (int i = 0; i < MAX_CLIENT; i++) {
+        if (client[i].online && !strcmp(client[i].name, name))
+            return i;
+    }
+    return -1;
+}
+
+```
+
+
+
+## Client端
+
+
+
+```c
+//Filename : client.c
+
+//在“出现的bug”中client.c的`c = getchar();`//下面加上
+if (msg.message[0] == '@') {
+    msg.flag = 1;
+}
+
+//在“增加的功能1”中的client.c的第九行加上
+  else if (rmsg.msg.flag == 2) {
+   	printf(YELLOW"通知信息: "NONE"%s\n", rmsg.msg.message);
+} else if (rmsg.msg.flag == 1) {
+      printf(L_BULE"%s"L_GREEN"*"NONE": %s\n", rmsg.msg.from, rmsg.msg.message);
+} else {
+      printf("Error!\n");
+  }
+	fflush(stdout);//不懂为啥要加这句？？
+```
+
