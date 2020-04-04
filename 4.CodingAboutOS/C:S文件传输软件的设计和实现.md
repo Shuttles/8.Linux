@@ -240,6 +240,18 @@ gcc recver.c ./common/common.c ./common/tcp_server.c -o server
 #include "./common/tcp_server.c"
 #include "./common/common.h"
 
+struct FileMsg {
+    long size;//文件大小，用来检验收到的文件大小与原文件大小是否一致
+   	char name[50];//文件名
+    char buf[4096];//文件真实信息
+};
+
+void signal_handler(int sig) {
+    wait(NULL);
+}
+
+
+// 这是原来的不考虑拆包、粘包问题时写的child_do！！
 void child_do(int fd) {
     size_t recv_size;
     struct FileMsg packet_t;
@@ -250,6 +262,77 @@ void child_do(int fd) {
     }
 }
 
+
+//下面是考虑了这些问题后写的！！
+void child_do(int fd) {
+    size_t recv_size, size = 0;
+    struct FileMsg packet_t, packet, packet_pre;
+    int packet_size = sizeof(struct FileMsg);
+    int offset, flag;//flag定义为packet_pre里的offset！!
+    long filesize;
+    int cnt = 0;//判断是否为第一个包！！
+    printf("Before recv!\n");
+    FILE *fp = NULL;
+    while (1) {
+        //应该是个死循环，收n次整包！！！
+        if (flag) {
+            //意味着上次有粘包，拆包后在packer_pre里！！
+            memcpy(&packet, &packer_pre, flag);
+            offset = flag;//offset应等于上次剩下的大小！！
+        }
+        flag = 0;
+        while ((recv_size = recv(fd, (void *)&packet_t, packet_size, 0) > 0) {
+            //这个循环是为了保证每次都能收一个整包！！
+            if (offset + recv_size == packet_size) {
+                //如果是个整包！
+                memcpy((char *)&packet + offset, &packet_t, recv_size);
+                offset = 0;
+                printf("整包 size = %d!\n", offset + recv_size);
+                break;
+            } else if (offset + recv_size < packet_size) {
+                //拆包！
+               	memcpy((char *)&packet + offset, &packet_t, recv_size); 
+               	offset += recv_size;
+                printf("拆包 size = %d!\n", offset);
+            } else {
+                //粘包！！
+                memcpy((char *)&packet + offset, &packet_t, packet_size - offset);
+                flag = recv_size - (packet_size - offset);
+                memcpy(&packet_pre, (char *)&packet_t + packet_size - offset, flag);
+                offset = 0;
+                printf("粘包 size = %d!\n", flag);
+                break;//只有整包和拆包要break！！！
+            }
+        }
+        if (!cnt) {
+            //如果是收到的第一个包！那就找文件名！！
+            printf("recv %s with size = %d\n", packet.name, packet.size);
+            if ((fp = fopen(packet.name), "wb") == NULL) {
+                perror("fopen");
+                break;
+            }
+            
+        }
+        cnt++;
+       	
+       //要在本地开始写文件了
+       size_t write_size = 0;
+       if (packet.size - size >= packet_size) {
+           write_size = fwrite(packet.buf, 1, sizeof(packet.buf), fp);
+       } else {
+           //不是一个整包
+           write_size = fwrite(packet.buf, 1, packet.size - size, fp);
+       }
+       size += write_size;
+               
+       if (size >= packet.size) {
+           printf("Finished : %s!\n", packet.name);
+           break;
+       }
+    }
+    close(fd);
+    fclose(fp);
+}
 
 int main(int argc, char **argv) {
     if (argc != 2) {
@@ -268,6 +351,8 @@ int main(int argc, char **argv) {
         return 1;
     }
     
+    signal(SIGCHLD, signal_handler);//在此注册个signal函数！
+    
     //该收文件了！
     while (1) {
         if ((fd = accept(server_listen, NULL, NULL)) < 0) {
@@ -285,7 +370,7 @@ int main(int argc, char **argv) {
         if (pid == 0) {
             close(server_listen);//因为子进程一定用不上server_listen了
             child_do(fd);
-            exit(0);//一定要exit！！！！
+            exit(0);//一定要exit！！！！否则后果你懂的！！
         } else {
             close(fd);//父进程一定用不上fd了
         }
