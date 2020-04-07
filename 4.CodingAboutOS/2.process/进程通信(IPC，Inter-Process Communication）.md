@@ -509,3 +509,162 @@ DESCRIPTION
 2. 这就很好地体现了`cond_wait()`为什么要先unlock再挂起！
 
    --因为为了释放这块共享内存！
+
+
+
+
+
+#### Server端
+
+
+
+```c
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/types.h>
+#include <signal.h>
+#include <string.h>
+#include <pthread.h>
+
+struct Shm {
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    char buff[1024];
+};
+
+struct Shm *share_memory = NULL;
+
+int main() {
+    int shmid;
+    key_t key = ftok(".", 198);
+    
+    if ((shmid = shmget(key, sizeof(struct Shm), IPC_CREAT | 0666)) < 0) {
+        //注意第二个参数变了！！！！！不再是4096！！
+        perror("shmget");
+        return 1;
+    }
+    
+    printf("After shmget!\n");
+    
+    if ((share_memory = (struct Shm *)shmat(shmid, 0, 0)) <= 0) {
+        perror("shmat");
+        return 1;
+    }
+    
+    printf("After shmat!\n");
+    
+    memset(share_memory, 0, sizeof(struct Shm));
+    
+    //下面是核心内容！！！！！！！！！！！！！！！！！！！！！
+    pthread_mutexattr_t m_attr;
+    pthread_condattr_t c_attr;//cond属性变量的声明
+    
+    pthread_mutexattr_init(&m_attr);
+    pthread_condattr_init(&c_attr);//属性初始化
+    
+    pthread_mutexattr_setpshared(&m_attr, PTHREAD_PROCESS_SHARED);
+    pthread_condattr_setpshared(&c_attr, PTHREAD_PROCESS_SHARED);//设置进程间共享
+    
+    pthread_mutex_init(&share_memory->mutex, &m_attr);
+    pthread_cond_init(&share_memory->cond, &c_attr);//cond初始化
+    
+    
+    
+    while (1) {
+        pthread_mutex_lock(&share_memory->mutex);
+        
+        printf("After mutex lock!\n");
+        pthread_cond_wait(&share_memory->cond, &share_memory->mutex);//等待信号！
+        //如果收到信号后没抢到锁，会咋样？？会忽略这次的信号吗？宿哥说是会，所以为了让server端抢到mutex，就在client中加了usleep(1000)！！！！！！
+        
+        
+        printf("After cond wait!\n");
+        printf("<Recv> : %s\n", share_memory->buff);
+        sleep(2);//请思考在这加sleep碍不碍事？逻辑有没有问题？(肯定是没问题的，但是要想清楚为啥)，而且加上了更好！
+        
+        pthread_mutex_unlock(&share_memory->mutex);
+    }
+    return 0;
+}
+```
+
+
+
+PS: 
+
+1. ==还是很不懂为啥cond_wait()非得绑定个mutex，还非得在用之前锁上，用之后解锁？这不是多此一举么？？？？==
+
+2. 后来我思考了很久，可能是因为
+
+   在上一段代码的57-58行之间别的线程无法访问cond以及共享内存，为此而设计的！！
+
+#### client端
+
+
+
+```c
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/types.h>
+#include <signal.h>
+#include <string.h>
+#include <pthread.h>
+
+struct Shm {
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    char buff[1024];
+};
+
+struct Shm *share_memory = NULL;
+
+int main() {
+    int shmid;
+    key_t key = ftok(".", 198);
+    
+    if ((shmid = shmget(key, sizeof(struct Shm), IPC_CREAT | 0666)) < 0) {
+        //注意第二个参数变了！！！！！不再是4096！！
+        perror("shmget");
+        return 1;
+    }
+    
+    if ((share_memory = (struct Shm *)shmat(shmid, 0, 0)) <= 0) {
+        perror("shmat");
+        return 1;
+    }
+    
+    //为什么不在这初始化锁和cond呢？因为只需要server端初始化就够了！！
+    
+    while (1) {
+        printf("Before mutex lock!\n")
+        pthread_mutex_lock(&share_memory->mutex);//锁上！
+        printf("After mutex lock!\n");
+  
+        printf("<client> : ");
+        scanf("%[^\n]s", share_memory->buff);
+        getchar();//吞回车
+  		
+        /*下面是宿哥视频里讲的，但是我感觉和视频后面他讲的矛盾！！
+        就是后面他讲，如果server端没抢到mutex，会忽略这次信号！！而不是等解锁后继续！
+        
+        pthread_cond_signal(&share_memory->cond);//发信号！
+        sleep(1);//必须是先发信号，然后server端接收到信号，尝试着给mutex加锁，但是由于这边还没解锁所以会阻塞！！等这边解锁之后那边才继续running！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+        */
+        
+        pthread_mutex_unlock(&share_memory->mutex);//解锁
+        pthread_cond_signal(&share_memory->cond);//发信号！
+       	usleep(1000);//停留极短的时间！！
+    }
+    return 0;
+}
+```
+
+
+
+==还是对各种加锁解锁有点懵。。。。==
