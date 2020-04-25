@@ -578,7 +578,7 @@ int main() {
         
         printf("After mutex lock!\n");
         pthread_cond_wait(&share_memory->cond, &share_memory->mutex);//等待信号！
-        //如果收到信号后没抢到锁，会咋样？？会忽略这次的信号吗？宿哥说是会，所以为了让server端抢到mutex，就在client中加了usleep(1000)！！！！！！
+        //如果收到信号后没抢到锁，会咋样？？会忽略这次的信号吗？宿哥说是会(然后就继续进行下去？？？到底会不会继续呢 还是去看man手册把！！)，所以为了让server端抢到mutex，就在client中加了usleep(1000)！！！！！！
         
         
         printf("After cond wait!\n");
@@ -668,3 +668,14 @@ int main() {
 
 
 ==还是对各种加锁解锁有点懵。。。。==
+
+
+
+
+
+
+
+
+
+# 3.PIPE
+
