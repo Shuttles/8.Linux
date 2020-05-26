@@ -138,6 +138,8 @@
 ```c
 #include "../common/tcp_server.h"
 #include "../common/head.h"
+#include "../common/common.h"
+#include "../common/color.h"
 
 #define CLIENTSIZE 50
 #define BUFSIZE 4096	
@@ -166,7 +168,7 @@ void FreeBuffer(struct Buffer *buffer) {/*free操作*/
 }
 
 int RecvToBuff(int fd, struct Buffer *buffer) {/*从fd中收信息,经大小写转化后放到buffer中*/
-	char buff[BUFSIZE] = {0};
+	char buff[BUFSIZE] = {0};/*必须清空*/
     int recv_num = 0;
     while (1) {
         recv_num = recv(fd, buff, sizeof(buff), 0);/*从fd中收信息放到buff中*/
@@ -188,7 +190,7 @@ int RecvToBuff(int fd, struct Buffer *buffer) {/*从fd中收信息,经大小写�
         if (errno == EAGAIN) /*表明不是严重出错*/
             return 0;
         return -1;/*真出错了*/
-    } else if (recv_num == 0) {/*表示应该关闭连接了*/
+    } else if (recv_num == 0) {/*表示收无可收了，应该关闭连接了*/
         return 1;
     }
 }
@@ -285,8 +287,8 @@ int main(int argc, char **argv) {
         }
         
         /*接下来开始处理收发信息*/
-        for (int i = 0; i < max_fd; i++) {
-            int retval;
+        for (int i = 0; i <= max_fd; i++) {/*一定要<=而不是<！！！！*/
+            int retval = 0;/*一定要初始化为0！！否则就会一登录就退出！*/
             if (i == server_listen) continue;
             if (FD_ISSET(i, &rfds)) {/*如果可读*/
                 retval = RecvToBuffer(i, buffer[i]);/*收信息*/
@@ -306,4 +308,6 @@ int main(int argc, char **argv) {
     return 0;
 }
 ```
+
+
 
