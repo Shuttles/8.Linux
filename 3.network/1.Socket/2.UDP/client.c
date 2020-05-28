@@ -17,7 +17,7 @@ int main() {
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(8888);
-    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_addr.s_addr = inet_addr("123.56.62.63");
 
     char *buf= (char *)malloc(sizeof(char) * 1024);
     while(1) {
