@@ -173,7 +173,7 @@ PS:你可以有多个对象(纯属比喻)，所以你的进程可以有多个门
 
    因为系统会直接给你分配个端口！
 
-2. 参数是目的地端(你想连接的人)的端口号
+2. 参数是==目的地端(你想连接的人)的端口号==
 
 
 
@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
   while (1) {
     int sockfd;//就相当于NPC
     printf("Socket before accept.\n");//输出调试
-    if (sockfd = accept(server_listen, NULL, NULL) < 0) {
+    if ((sockfd = accept(server_listen, NULL, NULL)) < 0) {
       //参数表明不关注是哪个地址
       perror("accept");
       close(sockfd);
@@ -328,7 +328,7 @@ int main(int argc, char **argv) {
     perror("socket");
     exit(1);
   }
-  
+   
   printf("Socket create.\n");//输出调试
   
   //主动连接
