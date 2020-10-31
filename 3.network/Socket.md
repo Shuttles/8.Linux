@@ -543,3 +543,32 @@ int main(int argc, char *argv[]) {
 >   版权声明：本文为CSDN博主「leon1741」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
 >   原文链接：https://blog.csdn.net/LEON1741/article/details/78142269
 
+
+
+
+
+
+
+
+
+## 代码封装
+
+-把不同的部分封装到不同的部分中去
+
+
+
+### 1.common目录
+
+--公用的函数、头文件
+
+#### 1.head.h
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+```
+
