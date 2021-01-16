@@ -52,17 +52,27 @@ int main(int argc, char *argv[]) {
             close(sockfd);
             continue;
         }
-        
-        char name[20] = {0};
-        printf("Socket after accept.\n");
-        if (recv(sockfd, name, sizeof(name), 0) <= 0) {
-            close(sockfd);
+
+        pid_t pid;
+        if ((pid = fork()) < 0) {
+            perror("fork");
             continue;
         }
+        
+        if (pid == 0) {
+            close(server_listen);
 
-        printf("Socket recv,\n");
-        printf("server_name = %s\n", name);
-        close(sockfd);
+            char name[20] = {0};
+            if (recv(sockfd, name, sizeof(name), 0) <= 0) {
+                perror("recv");
+                close(sockfd);
+            }
+            printf("Name = %s\n", name);
+            exit(0);
+        } else {
+            //父进程
+        }
+        
     }
 
     return 0;
