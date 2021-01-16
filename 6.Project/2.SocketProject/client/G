@@ -1,2 +1,2 @@
-gcc -o client -I ../common/ ../common/tcp_client.c client.c
+gcc -o client -I ../common/ ../common/common.c ../common/tcp_client.c client.c
 

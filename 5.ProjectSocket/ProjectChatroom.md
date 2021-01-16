@@ -148,7 +148,8 @@ char *conf = "./server.conf";//路径名称
 struct User *client;//client数组首地址
 
 void *work(void *arg) {
-    
+    printf("client login!\n");
+    return NULL;
 }
 
 int find_sub() {
@@ -161,7 +162,7 @@ int find_sub() {
 bool check_online(char *name) {//检查name这个用户名是否被用过了，如果被用过了，那就拒绝连接这个用户
     for (int i = 0; i < MAX_CLIENT; i++) {
         if (client[i].online && !strcmp(name, client[i].name)) {
-            printf("D : %s is online!\n", name);
+            printf("D : %s is already online!\n", name);
             return true;
         }
     }
@@ -200,19 +201,17 @@ int main() {//为啥不需要传参呢？因为参数已经由配置文件给出
         //如果成功收到client端登录后发送的信息，那首先得检查是否重名，如果重名，那就拒绝连接,如果不重名，那就在client数组中找一个可用的最小下标，然后分配给这个client一个client[sub];
         if (check_online(recvmsg.msg.from)) {
             //拒接连接
+        } else {
+        	//找最小下标并进行一系列操作
+        	//一系列操作其实目的就是把客户保存起来并且为他分配线程
+        	int sub;
+        	sub = find_sub();
+        	client[sub].online = 1;//置为在线
+        	client[sub].fd = fd;//保存这个文件描述符用来通信
+        	strcpy(client[sub].name, recvmsg.msg.from);
+        
+       		pthread_create(&client[sub].tid, NULL, work, NULL);
         }
-        
-        
-        //找最小下标并进行一系列操作
-        //一系列操作其实目的就是把客户保存起来并且为他分配线程
-        int sub;
-        sub = find_sub();
-        client[sub].online = 1;//置为在线
-        client[sub].fd = fd;//保存这个文件描述符用来通信
-        strcpy(client[sub].name, recvmsg.msg.from);
-        
-       	pthread_create(&client[sub].tid, NULL, work, NULL);
-        
         
         
     }
@@ -660,4 +659,4 @@ if (msg.message[0] == '@') {
 
 ## 1.common
 
-1. get_conf()里的一些api比如getline什么的
+1. get_value()里的一些api比如getline什么的

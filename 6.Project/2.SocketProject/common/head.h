@@ -15,5 +15,10 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <pthread.h>
+
 
 #endif

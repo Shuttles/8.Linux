@@ -549,17 +549,17 @@ int main(int argc, char *argv[]) {
 
 
 
-## 代码封装
+# 代码封装
 
 -把不同的部分封装到不同的部分中去
 
 
 
-### 1.common目录
+## 1.common目录
 
 --公用的函数、头文件
 
-#### 1.head.h
+### 1.head.h
 
 ```c
 #include <stdio.h>
