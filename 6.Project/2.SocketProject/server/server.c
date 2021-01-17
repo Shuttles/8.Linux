@@ -44,8 +44,10 @@ int find_sub() {
 void *work(void *arg) {
     int *sub = (int *)arg;
     int client_fd = client[*sub].fd;
-
     struct RecvMsg rmsg;
+
+    printf(GREEN("Login") " : %s\n", client[*sub].name);
+
     while (1) {
         //收信息
         rmsg = chat_recv(client_fd);
@@ -64,6 +66,7 @@ void *work(void *arg) {
 int main() {
     int port, server_listen, fd;
     struct RecvMsg recvmsg;
+    struct Msg msg;
     port = atoi(get_value(conf, "SERVER_PORT"));
     client = (struct User *)calloc(MAX_CLIENT, sizeof(struct User));
 
@@ -87,15 +90,25 @@ int main() {
         
         if (check_online(recvmsg.msg.from)) {
             //拒绝连接
-        } else {
-            //连接
-            int sub;
-            sub = find_sub();
-            client[sub].online = 1;
-            client[sub].fd = fd;
-            strcpy(client[sub].name, recvmsg.msg.from);
-            pthread_create(&client[sub].tid, NULL, work, (void *)&sub);
+            msg.flag = 3;
+            strcpy(msg.message, "You have already Login!");
+            chat_send(msg, fd);
+            close(fd);
+            continue;
         }
+
+        
+        //连接
+        msg.flag = 2;
+        strcpy(msg.message, "Welcome to this chatroom!");
+        chat_send(msg, fd);
+
+        int sub;
+        sub = find_sub();
+        client[sub].online = 1;
+        client[sub].fd = fd;
+        strcpy(client[sub].name, recvmsg.msg.from);
+        pthread_create(&client[sub].tid, NULL, work, (void *)&sub);
 
 
     }

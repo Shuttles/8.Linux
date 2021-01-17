@@ -9,6 +9,7 @@
 #include <tcp_client.h>
 #include <chatroom.h>
 #include <common.h>
+#include <color.h>
 
 char *conf = "./client.conf";
 
@@ -30,6 +31,19 @@ int main(int argc, char **argv) {
     if (chat_send(msg, sockfd) < 0) {
         return 2;
     } 
+
+    struct RecvMsg rmsg = chat_recv(sockfd);//我必须知道server是拒绝我的连接还是接收连接
+
+    if (rmsg.retval < 0) {
+        fprintf(stderr, "Error!\n");
+        return 1;
+    }
+
+    printf(GREEN("Server") " : %s\n", rmsg.msg.message);
+
+    if (rmsg.msg.flag == 3) {
+        close(sockfd);
+    }
 
     return 0;
 }
