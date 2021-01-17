@@ -9,6 +9,7 @@
 #include "../common/tcp_server.h"
 #include "../common/common.h"
 #include "../common/chatroom.h"
+#include "../common/color.h"
 
 struct User {
     char name[20];
@@ -41,7 +42,22 @@ int find_sub() {
 
 //线程工作函数
 void *work(void *arg) {
-    printf("client login!\n");
+    int *sub = (int *)arg;
+    int client_fd = client[*sub].fd;
+
+    struct RecvMsg rmsg;
+    while (1) {
+        //收信息
+        rmsg = chat_recv(client_fd);
+        if (rmsg.retval < 0) {
+            printf(PINK("Logout") " : %s \n", client[*sub].name);
+            close(client_fd);
+            client[*sub].online = 0;
+            return NULL;
+        }
+        printf(BLUE("%s") " : %s\n", rmsg.msg.from, rmsg.msg.message);
+    }
+
     return NULL;
 }
 
@@ -78,7 +94,7 @@ int main() {
             client[sub].online = 1;
             client[sub].fd = fd;
             strcpy(client[sub].name, recvmsg.msg.from);
-            pthread_create(&client[sub].tid, NULL, work, NULL);
+            pthread_create(&client[sub].tid, NULL, work, (void *)&sub);
         }
 
 
