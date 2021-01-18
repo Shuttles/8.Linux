@@ -43,6 +43,29 @@ int main(int argc, char **argv) {
 
     if (rmsg.msg.flag == 3) {
         close(sockfd);
+        return 1;
+    }
+
+    pid_t pid;
+    if ((pid = fork()) < 0) {
+        perror("fork");
+    }
+
+
+    if (pid == 0) {
+        //子进程发送消息
+        system("clear");
+        while (1) {
+            printf(PINK_HL("Please Input Message:\n"));
+            scanf("%[^\n]s", msg.message);
+            getchar();//吞回车
+            chat_send(msg, sockfd);
+            memset(msg.message, 0, sizeof(msg.message));
+            system("clear");
+        }
+    } else {
+        //父进程接收消息
+        wait(NULL);//等待子进程
     }
 
     return 0;
