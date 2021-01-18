@@ -294,7 +294,7 @@ server端：
 client端：
 
 1. 接收server端对登录操作的反馈信息及后续操作
-2. 在子进程中发送信息
+2. 在子进程中发送消息
 
 
 
@@ -486,8 +486,10 @@ if (pid = 0) {
        //scanf下面一行改成
        c = getchar();
    }
+   
+//复习的时候发现这样做并不能解决这个bug！！！！
    ```
-
+   
    
 
 
@@ -543,7 +545,9 @@ while (1) {
     FILE *log_fp = fopen(logfile, "w");
     struct RecvMsg rmsg;
     if (rmsg.msg.flag == 0) {
-    fprintf(log_fp, L_BLUE"%s : "NONE"%s\n", rmsg.msg.from, rmsg.msg.message);
+    	fprintf(log_fp, L_BLUE"%s : "NONE"%s\n", rmsg.msg.from, rmsg.msg.message);
+        printf(L_BLUE"%s : "NONE"%s\n", rmsg.msg.from, rmsg.msg.message);
+        fflush(log_fp);//这一行一定要！！！！！！！
     }
 }
 
@@ -562,6 +566,12 @@ msg.flag = 0;//标志这是个公聊信息！
 PS：除了fprintf之外，也可以用`freopen(log_file, "a+", stdout);`
 
 
+
+BUG：
+
+1. 自己发的公聊信息，自己收不到！！
+
+   原因：`system("clear")`
 
 
 
