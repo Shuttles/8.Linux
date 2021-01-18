@@ -74,6 +74,10 @@ int main(int argc, char **argv) {
             scanf("%[^\n]s", msg.message);
             getchar();//吞回车
             msg.flag = 0;
+
+            if (msg.message[0] == '@') {
+                msg.flag = 1;
+            }
             chat_send(msg, sockfd);
             memset(msg.message, 0, sizeof(msg.message));
             system("clear");
@@ -85,12 +89,28 @@ int main(int argc, char **argv) {
         struct RecvMsg rmsg;
         while (1) {
             rmsg = chat_recv(sockfd);
+
+            if (rmsg.retval < 0) {
+                printf(RED_HL("Error in Server!\n"));
+                break;
+            }
+
             if (rmsg.msg.flag == 0) {
                 //公聊信息
                 fprintf(log_fp, BLUE_HL("%s") " : %s\n", rmsg.msg.from, rmsg.msg.message);
                 printf(BLUE_HL("%s") " : %s\n", rmsg.msg.from, rmsg.msg.message);
-                fflush(log_fp);
+            } else if (rmsg.msg.flag == 2) {
+                fprintf(log_fp, YELLOW_HL("通知信息") " : %s\n", rmsg.msg.message);
+                printf(YELLOW_HL("通知信息") " : %s\n", rmsg.msg.message);
+            } else if (rmsg.msg.flag == 1) {
+                //私聊信息
+                fprintf(log_fp, GREEN_HL("私聊信息，from ") BLUE_HL("%s") " : %s\n", rmsg.msg.from, rmsg.msg.message);
+                printf(GREEN_HL("私聊信息，from ") BLUE_HL("%s") " : %s\n", rmsg.msg.from, rmsg.msg.message);
+            } else {
+                printf("Error!\n");
             }
+
+            fflush(log_fp);
         }
         
         fclose(log_fp);
