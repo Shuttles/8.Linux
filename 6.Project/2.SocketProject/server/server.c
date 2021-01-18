@@ -22,6 +22,7 @@ struct User {
 
 char *conf = "./server.conf";
 struct User *client;
+int sum_client = 0;
 
 bool check_online(char *name) {
     for (int i = 0; i < MAX_CLIENT; i++) {
@@ -40,6 +41,14 @@ int find_sub() {
     return -1;
 }
 
+
+void send_all(struct Msg msg) {
+    for (int i = 0; i < MAX_CLIENT; i++) {
+        if (client[i].online) 
+            chat_send(msg, client[i].fd);
+    }
+}
+
 //线程工作函数
 void *work(void *arg) {
     int sub = *(int *)arg;
@@ -53,11 +62,19 @@ void *work(void *arg) {
         rmsg = chat_recv(client_fd);
         if (rmsg.retval < 0) {
             printf(PINK("Logout") " : %s \n", client[sub].name);
+            sum_client--;
             close(client_fd);
             client[sub].online = 0;
             return NULL;
         }
+
         printf(BLUE("%s") " : %s\n", rmsg.msg.from, rmsg.msg.message);
+        if (rmsg.msg.flag == 0) {
+            //公聊信息
+            send_all(rmsg.msg);
+        } else {
+            printf("这是一个私聊信息!\n");
+        }
     }
 
     return NULL;
@@ -102,6 +119,7 @@ int main() {
         msg.flag = 2;
         strcpy(msg.message, "Welcome to this chatroom!");
         chat_send(msg, fd);
+        sum_client++;
 
         int sub;
         sub = find_sub();
