@@ -13,8 +13,18 @@
 
 char *conf = "./client.conf";
 
+int sockfd;
+
+void logout(int signalnum) {
+    close(sockfd);
+    printf("您已退出！\n");
+    exit(1);
+    return ;
+}
+
+
 int main(int argc, char **argv) {
-    int port, sockfd;
+    int port;
     struct Msg msg;
     char ip[20] = {0};
     port = atoi(get_value(conf, "SERVER_PORT"));
@@ -53,6 +63,7 @@ int main(int argc, char **argv) {
 
 
     if (pid == 0) {
+        signal(SIGINT, logout);
         //子进程发送消息
         system("clear");
         while (1) {
@@ -66,6 +77,7 @@ int main(int argc, char **argv) {
     } else {
         //父进程接收消息
         wait(NULL);//等待子进程
+        close(sockfd);
     }
 
     return 0;
