@@ -12,7 +12,7 @@ int socket_create(int port) {//创建监听状态的socket，返回sockfd
 
     //启动socket
     if ((server_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("socket");
+        //perror("socket");
         return -1;
     }
 
@@ -24,7 +24,7 @@ int socket_create(int port) {//创建监听状态的socket，返回sockfd
     server.sin_port = htons(port);
     server.sin_addr.s_addr = INADDR_ANY;
     if (bind(server_listen, (struct sockaddr *)&server, sizeof(server)) < 0) {
-        perror("bind");
+        //perror("bind");
         return -1;
     }
 
@@ -32,7 +32,7 @@ int socket_create(int port) {//创建监听状态的socket，返回sockfd
 
     //listen
     if (listen(server_listen, 20) < 0) {
-        perror("server");
+        //perror("server");
         return -1;
     }
 

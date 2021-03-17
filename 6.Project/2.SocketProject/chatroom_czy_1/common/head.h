@@ -12,4 +12,9 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <stdbool.h>
 #endif

@@ -16,14 +16,14 @@ int socket_connect(char *host, int port) {
     server.sin_addr.s_addr = inet_addr(host);
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("socket");
+        //perror("socket");
         return -1;
     }
 
     printf("Socket create.\n");
 
     if (connect(sockfd, (struct sockaddr *)&server, sizeof(server)) < 0) {
-        perror("connect");
+        //perror("connect");
         return -1;
     }
 
