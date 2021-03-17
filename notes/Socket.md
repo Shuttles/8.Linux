@@ -556,18 +556,113 @@ int main(int argc, char *argv[]) {
 
 
 
-## 1.common目录
+common目录
 
 --公用的函数、头文件
 
-### 1.head.h
+## 1.head.h
 
 ```c
+#ifndef _HEAD_H
+#define _HEAD_H
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <unistd.h>
+#endif
+```
+
+## 2.tcp_server.h/c
+
+```c
+//tcp_server.h
+#ifndef _TCP_SERVER_H
+#define _TCP_SERVER_H
+int socket_create(int port);//返回一个监听状态的socket的fd
+#endif
+```
+
+
+
+```c
+//tcp_sever.c
+#include "head.h"
+
+int socket_create(int port) {//创建监听状态的socket，返回sockfd
+    int server_listen;
+
+    //启动socket
+    if ((server_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket");
+        return -1;
+    }
+
+    printf("Socket_create.\n");
+
+    //bind
+    struct sockaddr_in server;
+    server.sin_family = AF_INET;
+    server.sin_port = htons(port);
+    server.sin_addr.s_addr = INADDR_ANY;
+    if (bind(server_listen, (struct sockaddr *)&server, sizeof(server)) < 0) {
+        perror("bind");
+        return -1;
+    }
+
+    printf("Socket_bind.\n");
+
+    //listen
+    if (listen(server_listen, 20) < 0) {
+        perror("server");
+        return -1;
+    }
+
+    return server_listen;
+}
+```
+
+
+
+
+
+## 3.tcp_client.h/c
+
+```c
+//tcp_client.h
+#ifndef _TCP_CLIENT_H
+#define _TCP_CLIENT_H
+int socket_connect(char *host, int port);//参数是server的ip地址和端口，返回connect之后的fd
+#endif
+```
+
+
+
+```c
+//tcp_client.c
+#include "head.h"
+
+int socket_connect(char *host, int port) {
+    int sockfd;
+    struct sockaddr_in server;
+
+    server.sin_family = AF_INET;
+    server.sin_port = htons(port);
+    server.sin_addr.s_addr = inet_addr(host);
+
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket");
+        return -1;
+    }
+
+    printf("Socket create.\n");
+
+    if (connect(sockfd, (struct sockaddr *)&server, sizeof(server)) < 0) {
+        perror("connect");
+        return -1;
+    }
+
+    return sockfd;
+}
 ```
 
