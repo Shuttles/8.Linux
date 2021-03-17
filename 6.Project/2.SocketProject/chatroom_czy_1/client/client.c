@@ -7,20 +7,30 @@
 
 #include <head.h>
 #include <tcp_client.h>
+#include <chatroom.h>
+#include <common.h>
 
-int main(int argc, char *argv[]) {
-    int sockfd;
-    if (argc != 3) {
-        fprintf(stderr, "Usage : %s ip port\n", argv[0]);
+char *conf = "./client.conf";
+
+int main() {
+    int port, sockfd;
+    char ip[20] = {0};
+    struct Msg msg;
+    port = atoi(get_value(conf, "SERVER_PORT"));
+    strcpy(ip, get_value(conf, "SERVER_IP"));
+
+    if ((sockfd = socket_connect(ip, port)) < 0) {
+        perror("socket_connect");
         return 1;
     }
 
-    if ((sockfd = socket_connect(argv[1], atoi(argv[2]))) < 0) {
-        perror("socket_connect");
+    strcpy(msg.from, get_value(conf, "MY_NAME"));
+    msg.flag = 2;
+
+    if (chat_send(msg, sockfd) < 0) {
         return 2;
     }
-
-
+    
 
     return 0;
 }

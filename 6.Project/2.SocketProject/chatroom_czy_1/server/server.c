@@ -34,6 +34,7 @@ int find_sub() {
 bool check_online(char *name) {
     for (int i = 0; i < MAX_CLIENT; i++) {
         if (client[i].online && !strcmp(name, client[i].name)) {
+            printf("D: %s is already online!\n", name);
             return true;
         }
     }
