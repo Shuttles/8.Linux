@@ -452,6 +452,8 @@ int main(int argc, char *argv[]) {
       continue;
     }
     
+      printf("Socket After accpet.\n");//输出调试
+     
     //因为子进程一开始是复制的父进程的内容，那么他俩可以做相同的事，但是我现在想让他俩做不同的事，就得判断哪个是子进程哪个是父进程
     if (pid == 0) {//如果创建子进程成功，那么在子进程中的pid是被设置为0的
       close(server_listen);
@@ -467,7 +469,6 @@ int main(int argc, char *argv[]) {
     /*下面这段是原来没有优化过的
     //如果连接成功了
     //我现在想知道对方的名字，
-    printf("Socket After accpet.\n");//输出调试
     char name[20] = {0};
     if (recv(sockfd， name, sizeof(name), 0) <= 0) {
       //如果接收名字失败

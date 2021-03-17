@@ -487,6 +487,8 @@ if (pid = 0) {
        c = getchar();
    }
    
+   ```
+
 //复习的时候发现这样做并不能解决这个bug！！！！
    ```
    
@@ -508,7 +510,7 @@ if (pid = 0) {
 
 
 
-```c
+​```c
 //Filename: server.c
 
 //在“进一步功能实现”的work函数的19行下面加上
@@ -525,7 +527,7 @@ void send_all(struct Msg msg) {
         chat_send(msg, client[i].fd);
     }
 }
-```
+   ```
 
 
 
