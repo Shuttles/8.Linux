@@ -88,6 +88,9 @@ int main() {
             if (rmsg.msg.flag == 0) {//公聊信息
                 fprintf(log_fp, BLUE("%s: ") "%s\n", rmsg.msg.from, rmsg.msg.message);
                 fflush(log_fp);//必须有这句！！
+            } else if (rmsg.msg.flag == 2) {
+                fprintf(log_fp, RED_HL("[Server]: ") "%s\n", rmsg.msg.message);
+                fflush(log_fp);
             }
         }
 
