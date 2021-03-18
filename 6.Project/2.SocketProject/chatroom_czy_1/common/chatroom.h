@@ -21,6 +21,8 @@ struct RecvMsg {
     int retval;
 };
 
+//其实char_send也可以像chat_recv一样包装一个struct
+//chat_send和chat_recv是两种实现方式
 int chat_send(struct Msg msg, int fd) {
     if (send(fd, (void *)&msg, sizeof(msg), 0) <= 0) {
         return -1;

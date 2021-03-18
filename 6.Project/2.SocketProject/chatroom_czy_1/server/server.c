@@ -42,14 +42,15 @@ bool check_online(char *name) {
 }
 
 void *work(void *arg) {
-    printf("client login!\n");
     int *sub = (int *)arg;
     int client_fd = client[*sub].fd;
     struct RecvMsg rmsg;
+    printf(GREEN_HL("[login]: ") "%s\n", client[*sub].name);
+
     while (1) {
         rmsg = chat_recv(client_fd);//收消息
         if (rmsg.retval < 0) {//收消息出错
-            printf(RED_HL("[Logout]: %s\n"), client[*sub].name);
+            printf(RED_HL("[Logout]: ") "%s\n", client[*sub].name);
             close(client_fd);
             client[*sub].online = 0;
             return NULL;
@@ -64,6 +65,7 @@ void *work(void *arg) {
 int main() {
     int port, server_listen, fd;
     struct RecvMsg recvmsg;
+    struct Msg msg;
     port = atoi(get_value(conf, "SERVER_PORT"));
     client = (struct User *)calloc(MAX_CLIENT, sizeof(struct User));
 
@@ -86,7 +88,16 @@ int main() {
 
         if (check_online(recvmsg.msg.from)) {
             //拒绝连接
+            msg.flag = 3;
+            strcpy(msg.message, "You are already online!");
+            chat_send(msg, fd);
+            close(fd);
         } else {
+            //接受连接
+            msg.flag = 2;
+            strcpy(msg.message, "Welcome to this chatroom!");
+            chat_send(msg, fd);
+
             int sub;
             sub = find_sub();
             client[sub].online = 1;
