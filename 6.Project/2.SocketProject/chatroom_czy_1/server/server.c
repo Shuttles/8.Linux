@@ -42,17 +42,17 @@ bool check_online(char *name) {
 }
 
 void *work(void *arg) {
-    int *sub = (int *)arg;
-    int client_fd = client[*sub].fd;
+    int sub = *(int *)arg;
+    int client_fd = client[sub].fd;
     struct RecvMsg rmsg;
-    printf(GREEN_HL("[login]: ") "%s\n", client[*sub].name);
+    printf(GREEN_HL("[login]: ") "%s\n", client[sub].name);
 
     while (1) {
         rmsg = chat_recv(client_fd);//收消息
-        if (rmsg.retval < 0) {//收消息出错
-            printf(RED_HL("[Logout]: ") "%s\n", client[*sub].name);
+        if (rmsg.retval < 0) {//收消息出错表明对方已下线
+            printf(RED_HL("[Logout]: ") "%s\n", client[sub].name);
             close(client_fd);
-            client[*sub].online = 0;
+            client[sub].online = 0;
             return NULL;
         }
 

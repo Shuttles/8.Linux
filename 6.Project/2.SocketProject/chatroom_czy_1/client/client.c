@@ -12,9 +12,17 @@
 #include <color.h>
 
 char *conf = "./client.conf";
+int sockfd;
+
+void logout(int signalnum) {
+    close(sockfd);
+    printf(RED_HL("您已退出！\n"));
+    exit(1);
+    return ;
+}
 
 int main() {
-    int port, sockfd;
+    int port;
     char ip[20] = {0};
     struct Msg msg;
     port = atoi(get_value(conf, "SERVER_PORT"));
@@ -55,6 +63,7 @@ int main() {
     }
 
     if (pid == 0) {
+        signal(SIGINT, logout);
         system("clear");
         while (1) {
             printf(PURPLE_HL("Please Input Message\n"));
@@ -66,6 +75,7 @@ int main() {
         }
     } else {
         wait(NULL);
+        close(sockfd);
     }
     return 0;
 }
