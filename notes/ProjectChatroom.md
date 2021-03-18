@@ -490,11 +490,6 @@ if (pid = 0) {
    ```
 
 //复习的时候发现这样做并不能解决这个bug！！！！
-   ```
-   
-   
-
-
 
 
 
@@ -508,9 +503,7 @@ if (pid = 0) {
 
 1. 很显然，server端需要在线程函数`work()`中做文章
 
-
-
-​```c
+   ```c
 //Filename: server.c
 
 //在“进一步功能实现”的work函数的19行下面加上
@@ -672,3 +665,4 @@ if (msg.message[0] == '@') {
 ## 1.common
 
 1. get_value()里的一些api比如getline什么的
+2. pthread_create
