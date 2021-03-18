@@ -34,7 +34,7 @@ int find_sub() {
 bool check_online(char *name) {
     for (int i = 0; i < MAX_CLIENT; i++) {
         if (client[i].online && !strcmp(name, client[i].name)) {
-            printf("D: %s is already online!\n", name);
+            printf(RED_HL("[Warning]:") " %s is already online!\n", name);
             return true;
         }
     }
@@ -43,6 +43,20 @@ bool check_online(char *name) {
 
 void *work(void *arg) {
     printf("client login!\n");
+    int *sub = (int *)arg;
+    int client_fd = client[*sub].fd;
+    struct RecvMsg rmsg;
+    while (1) {
+        rmsg = chat_recv(client_fd);//收消息
+        if (rmsg.retval < 0) {//收消息出错
+            printf(RED_HL("[Logout]: %s\n"), client[*sub].name);
+            close(client_fd);
+            client[*sub].online = 0;
+            return NULL;
+        }
+
+        printf(BLUE("%s : %s\n"), rmsg.msg.from, rmsg.msg.message);
+    }
     return NULL;
 }
 
@@ -78,7 +92,7 @@ int main() {
             client[sub].online = 1;
             client[sub].fd = fd;
             strcpy(client[sub].name, recvmsg.msg.from);
-            pthread_create(&client[sub].tid, NULL, work, NULL);
+            pthread_create(&client[sub].tid, NULL, work, (void *)&sub);
         }
 
     }

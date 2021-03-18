@@ -30,6 +30,8 @@ int main() {
     if (chat_send(msg, sockfd) < 0) {
         return 2;
     }
+
+
     
 
     return 0;
