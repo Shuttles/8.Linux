@@ -17,4 +17,5 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <sys/wait.h>
 #endif

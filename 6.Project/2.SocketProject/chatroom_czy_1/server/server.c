@@ -56,7 +56,7 @@ void *work(void *arg) {
             return NULL;
         }
 
-        printf(BLUE("%s : %s\n"), rmsg.msg.from, rmsg.msg.message);
+        printf(BLUE("%s : ") "%s\n", rmsg.msg.from, rmsg.msg.message);
     }
     return NULL;
 }

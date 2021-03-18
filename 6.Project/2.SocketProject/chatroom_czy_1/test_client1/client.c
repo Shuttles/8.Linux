@@ -44,8 +44,28 @@ int main() {
     
     if (rmsg.msg.flag == 3) {
         close(sockfd);
+        return 3;
     }
 
 
+    pid_t pid;
+    if ((pid = fork()) < 0) {
+        perror("fork");
+        return 4;
+    }
+
+    if (pid == 0) {
+        system("clear");
+        while (1) {
+            printf(PURPLE_HL("Please Input Message\n"));
+            memset(msg.message, 0, sizeof(msg.message));
+            scanf("%[^\n]s", msg.message);
+            getchar();
+            chat_send(msg, sockfd);
+            system("clear");
+        }
+    } else {
+        wait(NULL);
+    }
     return 0;
 }
