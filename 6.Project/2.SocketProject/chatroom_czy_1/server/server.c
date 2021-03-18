@@ -41,6 +41,16 @@ bool check_online(char *name) {
     return false;
 }
 
+
+void send_all(struct Msg msg) {
+    for (int i = 0; i < MAX_CLIENT; i++) {
+        if (!client[i].online) continue;
+        chat_send(msg, client[i].fd);
+    }
+    return ;
+}
+
+
 void *work(void *arg) {
     int sub = *(int *)arg;
     int client_fd = client[sub].fd;
@@ -56,7 +66,15 @@ void *work(void *arg) {
             return NULL;
         }
 
+        //在server的stdout上打印
         printf(BLUE("%s : ") "%s\n", rmsg.msg.from, rmsg.msg.message);
+        //判断信息类型之后看要不要转发给每个client
+        if (rmsg.msg.flag == 0) {
+            send_all(rmsg.msg);
+        } else {
+            printf(YELLOW_HL("这是一个私聊信息！\n"));
+        }
+
     }
     return NULL;
 }
