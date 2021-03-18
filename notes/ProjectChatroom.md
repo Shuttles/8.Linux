@@ -455,6 +455,7 @@ if (pid = 0) {
 
       ```c
       //在“进一步功能实现的”client.c中的11行之前加上
+      //即只在子进程中加上下面这一行，父进程没必要
       signal(SIGINT, logout);
       
       //logout的函数声明与定义
@@ -468,8 +469,8 @@ if (pid = 0) {
       //接着在22行下面加上
       close(sockfd);//为什么父进程中也要close呢？因为子进程是完全复制了父进程的内容，所以子进程关掉的sockfd是子进程中的，父进程中的sockfd没关掉
       
-      ```
-
+   ```
+      
       
 
 3. client端运行时，如果按下`Ctrl + D(即EOF)`，也结束不了进程
@@ -504,35 +505,28 @@ if (pid = 0) {
 1. 很显然，server端需要在线程函数`work()`中做文章
 
    ```c
-//Filename: server.c
-
-//在“进一步功能实现”的work函数的19行下面加上
-if (rmsg.msg.flag == 0) {
-    send_all(rmsg.msg);
-} else {
-    printf("这是一条私聊信息\n");
-}
-
-//send_all函数的实现
-void send_all(struct Msg msg) {
-    for (int i = 0; i < MAX_CLIENT; i++) {
-        if (!clien[i].online) continue;
-        chat_send(msg, client[i].fd);
-    }
-}
+   //Filename: server.c
+   //在“进一步功能实现”的work函数的19行下面加上
+   if (rmsg.msg.flag == 0) {
+       send_all(rmsg.msg);
+   } else {
+       printf("这是一条私聊信息\n");
+   }
+   
+   //send_all函数的实现
+   void send_all(struct Msg msg) {
+       for (int i = 0; i < MAX_CLIENT; i++) {
+           if (!clien[i].online) continue;
+           chat_send(msg, client[i].fd);
+       }
+   }
    ```
-
-
-
-
 
 ## Client端
 
 1. 原来的子进程用于发送信息，那么父进程就可以用来接收公聊信息！
 
-
-
-```c
+   ```c
 //Filename : client.c
 
 //在父进程的wait(NULL)前面加上
@@ -541,7 +535,7 @@ while (1) {
     struct RecvMsg rmsg;
     if (rmsg.msg.flag == 0) {
     	fprintf(log_fp, L_BLUE"%s : "NONE"%s\n", rmsg.msg.from, rmsg.msg.message);
-        printf(L_BLUE"%s : "NONE"%s\n", rmsg.msg.from, rmsg.msg.message);
+        //printf(L_BLUE"%s : "NONE"%s\n", rmsg.msg.from, rmsg.msg.message);
         fflush(log_fp);//这一行一定要！！！！！！！
     }
 }
@@ -556,7 +550,7 @@ strcpy(logfile, get_value(conf, "LOG_FILE"));
 
 //如果想试验的话就在子进程(用来发送信息)中加上
 msg.flag = 0;//标志这是个公聊信息！
-```
+   ```
 
 PS：除了fprintf之外，也可以用`freopen(log_file, "a+", stdout);`
 
@@ -660,9 +654,28 @@ if (msg.message[0] == '@') {
 
 
 
-# 2刷有些没弄懂的地方
+# 5.有些没弄懂的地方
 
 ## 1.common
 
 1. get_value()里的一些api比如getline什么的
-2. pthread_create
+
+
+
+## 2.client.c
+
+1. pthread_create
+
+
+
+## 3.client.c
+
+1. `wait(NULL);`　为了预防僵尸进程？？
+2. `fflush(log_fp)` 以及为啥必须加这句？？
+
+
+
+# 6.可以改进的地方
+
+1. `client`的数据结构可以改进为链表
+2. 来一个用户开一个线程，走一个用户关一个线程，开销太大，可以改用线程池，这样就不存在线程的创建和销毁了
