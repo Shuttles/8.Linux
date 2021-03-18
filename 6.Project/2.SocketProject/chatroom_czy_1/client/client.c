@@ -74,7 +74,10 @@ int main() {
             memset(msg.message, 0, sizeof(msg.message));
             scanf("%[^\n]s", msg.message);
             getchar();
-            msg.flag = 0;//测试公聊信息
+
+            msg.flag = 0;//先默认为公聊信息
+            if (msg.message[0] == '@')  msg.flag = 1;
+
             chat_send(msg, sockfd);
             system("clear");
         }
@@ -85,13 +88,24 @@ int main() {
         
         while (1) {
             rmsg = chat_recv(sockfd);
+
+            if (rmsg.retval < 0) {//server下线(比如server按了ctrl + c)
+                fprintf(log_fp, RED_HL("[Warning]: Server is down! Please log out!"));
+                fflush(log_fp);
+                break;//被迫下线
+            }
+
             if (rmsg.msg.flag == 0) {//公聊信息
                 fprintf(log_fp, BLUE("%s: ") "%s\n", rmsg.msg.from, rmsg.msg.message);
-                fflush(log_fp);//必须有这句！！
+            } else if (rmsg.msg.flag == 1) {//私聊
+                fprintf(log_fp, YELLOW_HL("%s: ") "%s\n", rmsg.msg.from, rmsg.msg.message);
             } else if (rmsg.msg.flag == 2) {
                 fprintf(log_fp, RED_HL("[Server]: ") "%s\n", rmsg.msg.message);
-                fflush(log_fp);
+            } else {
+                fprintf(log_fp, RED_HL("[Server]: ") "Please log out!\n");
+                break;
             }
+            fflush(log_fp);//必须有这句！！
         }
 
         wait(NULL);
