@@ -8,4 +8,5 @@
 #ifndef _TCP_CLIENT_H
 #define _TCP_CLIENT_H
 int socket_connect(char *host, int port);//连接到某个ip和port
+int socket_connect_timeout(char *host, int port, long timeout);//带超时时间
 #endif
