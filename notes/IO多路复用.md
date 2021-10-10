@@ -53,8 +53,34 @@
    ![img](https://wx2.sinaimg.cn/mw690/005LasY6ly1gv9e2h03z8j60ho04mq3o02.jpg)
 
    ![img](https://wx3.sinaimg.cn/mw690/005LasY6ly1gv9e2lw0hrj60oh04h0ub02.jpg)
+   
+3. **描述**
 
+   + 简介
 
+     ![img](https://wx3.sinaimg.cn/mw690/005LasY6ly1gva844p6nlj60n405mjt702.jpg)
+
+   + 监听的具体含义
+
+     ![img](https://wx4.sinaimg.cn/mw690/005LasY6ly1gva8afp2xfj60ld059mz902.jpg)
+
+   + 阻塞何时终止
+
+     ![img](https://wx4.sinaimg.cn/mw690/005LasY6ly1gva8f5huj2j60lf05mmy102.jpg)
+
+   + 返回之后
+
+     ![img](https://wx4.sinaimg.cn/mw690/005LasY6ly1gva8cb5ms0j60ld02174x02.jpg)
+
+     ![img](https://wx1.sinaimg.cn/mw690/005LasY6ly1gva8cdh74ij60la02qjs602.jpg)
+
+   + timeval
+
+     ![img](https://wx3.sinaimg.cn/mw690/005LasY6ly1gva8ihqgk4j60l309575402.jpg)
+
+4. 其他：
+
+   见man手册
 
 
 
@@ -80,15 +106,111 @@
 
 2. select 使用固定长度的 BitsMap（**数组**），表示文件描述符集合，而且所支持的文件描述符的个数是有限制的，在 Linux 系统中，由内核中的 FD_SETSIZE 限制， 默认最大值为 `1024`，只能监听 0~1023 的文件描述符。
 
-   poll 不再用 BitsMap 来存储所关注的文件描述符，取而代之用动态数组，以**链表**形式来组织，突破了 select 的文件描述符个数限制，当然还会受到系统文件描述符限制。
+   poll 不再用 BitsMap 来存储所关注的文件描述符，取而代之用动态数组，以**链表**（==是这样吗？为什么poll参数里还是数组呢？==）形式来组织，突破了 select 的文件描述符个数限制，当然还会受到系统文件描述符限制。
 
 3. 但是 poll 和 select 并没有太大的本质区别，**都是使用「线性结构」存储进程关注的 Socket 集合，因此都需要遍历文件描述符集合来找到可读或可写的 Socket，时间复杂度为 O(n)，而且也需要在用户态与内核态之间拷贝文件描述符集合**，这种方式随着并发数上来，性能的损耗会呈指数级增长。
+
+
+
+## 2.1API
+
+1. **简介及头文件**
+
+   ![img](https://wx1.sinaimg.cn/mw690/005LasY6ly1gva8nqc4baj60mu04aaae02.jpg)
+
+2. **函数原型**
+
+   ![img](https://wx1.sinaimg.cn/mw690/005LasY6ly1gva8nt5attj60gb014dft02.jpg)
+
+   ![img](https://wx4.sinaimg.cn/mw690/005LasY6ly1gva8qazd6dj60n103u75c02.jpg)
+
+3. **描述**
+
+   + 参数
+
+     ![img](https://wx3.sinaimg.cn/mw690/005LasY6ly1gva8x8k4cxj60n208tjt602.jpg)
+
+     ![img](https://wx1.sinaimg.cn/mw690/005LasY6ly1gva99j3aosj60la0bs42s02.jpg)
+
+   + events revents
+
+     ![img](https://wx3.sinaimg.cn/mw690/005LasY6ly1gva9bfm36wj60lj0cc40p02.jpg)
 
 
 
 # 3.epoll
 
 ## 3.1API
+
+**epoll整体man手册**
+
+![img](https://wx4.sinaimg.cn/mw690/005LasY6ly1gva9itj9haj60nb0fd77y02.jpg)
+
+
+
+**epoll_create:**
+
+1. **简介及头文件**
+
+   ![img](https://wx2.sinaimg.cn/mw690/005LasY6ly1gva9nhxdduj60n904fmxm02.jpg)
+
+2. **函数原型**
+
+   ![img](https://wx2.sinaimg.cn/mw690/005LasY6ly1gva9nhxdduj60n904fmxm02.jpg)
+
+   ![img](https://wx2.sinaimg.cn/mw690/005LasY6ly1gva9pzw3arj60n101zmxh02.jpg)
+
+3. **描述**
+
+   ![img](https://wx1.sinaimg.cn/mw690/005LasY6ly1gva9qw4q63j60nd06ftaw02.jpg)
+
+   
+
+
+
+**epoll_ctl:**
+
+1. **简介及头文件**
+
+   ![img](https://wx2.sinaimg.cn/mw690/005LasY6ly1gva9t1lhb3j60na04eq3d02.jpg)
+
+2. **函数原型**
+
+   ![img](https://wx3.sinaimg.cn/mw690/005LasY6ly1gva9t7mtnnj60j301a0sr02.jpg)
+
+   ![img](https://wx3.sinaimg.cn/mw690/005LasY6ly1gva9tagokxj60n102474k02.jpg)
+
+3. **描述**
+
+   ![img](https://wx3.sinaimg.cn/mw690/005LasY6ly1gva9xg5r9sj60nb0cmacq02.jpg)
+
+   ![img](https://wx3.sinaimg.cn/mw690/005LasY6ly1gva9xk7d20j60lp0aiacc02.jpg)
+
+
+
+**epoll_wait:**
+
+1. **简介及头文件**
+
+   ![img](https://wx2.sinaimg.cn/mw690/005LasY6ly1gvaa73ikc0j60ng04hdgc02.jpg)
+
+2. **函数原型**
+
+   ![img](https://wx4.sinaimg.cn/mw690/005LasY6ly1gvaajv2d25j60fe01g74d02.jpg)
+
+   ![img](https://wx3.sinaimg.cn/mw690/005LasY6ly1gvaak02q26j60n803cmy102.jpg)
+
+3. **描述**
+
+   ![img](https://wx4.sinaimg.cn/mw690/005LasY6ly1gvaap4k9ouj60m303ydgw02.jpg)
+
+   不过不是很懂events是传入参数还是传出参数？
+
+   ![img](https://wx3.sinaimg.cn/mw690/005LasY6ly1gvaaswalayj60kb02x3zb02.jpg)
+
+   看上去好像是**传出参数**
+
+   
 
 
 
@@ -142,7 +264,7 @@
 
 1. select需要打开文件，os对每一个进程能打开的文件是有限制的，默认最大值1024，所以select最高并发是1024个
 2. select中有三个set，而poll中只有一个数组和两组events，更进一步，epoll中只有一组events
-3. select只能监听read、write、异常事件，而poll和epoll可以监听更多事件。
+3. select只能监听read、write、异常事件，而poll和epoll**可以监听更多事件**。
 
 
 
@@ -211,3 +333,5 @@
 5. 极客时间-网络编程实战
 
    https://time.geekbang.org/column/article/143245
+   
+   
